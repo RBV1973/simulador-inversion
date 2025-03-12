@@ -14,6 +14,7 @@ col1, col2 = st.columns(2)
 with col1:
     fecha_inicio = st.text_input("Fecha de inicio (YYYY-MM-DD)", "2020-01-01")
     fecha_fin = st.text_input("Fecha de fin (YYYY-MM-DD)", "2025-03-08")
+    capital_inicial = st.number_input("Capital inicial ($)", min_value=0.0, value=1000.0, step=100.0)  # Nueva entrada
 with col2:
     frecuencia = st.selectbox("Frecuencia de aportación", ["Mensual", "Semanal"])
     inversion_periodica = st.number_input(f"Inversión {frecuencia.lower()} ($)", min_value=1.0, value=500.0 if frecuencia == "Mensual" else 125.0, step=10.0)
@@ -22,7 +23,7 @@ ticker = st.text_input("Ticker del activo (ej. SPY, TSLA, NVDA)", "SPY")
 impuesto_venta = st.number_input("Porcentaje de impuestos por venta (%)", min_value=0.0, max_value=100.0, value=15.0, step=1.0)
 
 # Función para validar y calcular resultados de ambas estrategias
-def calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica, comision, ticker, impuesto_venta):
+def calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica, comision, ticker, impuesto_venta, capital_inicial):
     try:
         # Validar fechas
         fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
@@ -90,7 +91,7 @@ def calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica
         # Variables para estrategia con venta
         acciones_totales_est = 0
         inversion_total_est = 0
-        capital_disponible_est = 0
+        capital_disponible_est = capital_inicial  # Inicializado con capital inicial
         en_mercado_est = True
         costo_total_acciones_est = 0.0
         costo_promedio_est = 0.0
@@ -98,7 +99,7 @@ def calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica
         # Variables para estrategia sin venta
         acciones_totales_no_venta = 0
         inversion_total_no_venta = 0
-        capital_disponible_no_venta = 0
+        capital_disponible_no_venta = capital_inicial  # Inicializado con capital inicial
         costo_total_acciones_no_venta = 0.0
         costo_promedio_no_venta = 0.0
 
@@ -197,7 +198,7 @@ def format_number(x):
 
 # Botón para ejecutar la simulación
 if st.button("Calcular"):
-    resultados_estrategia, resultados_no_venta = calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica, comision, ticker, impuesto_venta)
+    resultados_estrategia, resultados_no_venta = calcular_resultados(fecha_inicio, fecha_fin, frecuencia, inversion_periodica, comision, ticker, impuesto_venta, capital_inicial)
     
     if resultados_estrategia is not None and resultados_no_venta is not None:
         # Resultados numéricos para estrategia con venta
@@ -218,14 +219,14 @@ if st.button("Calcular"):
 
         st.subheader("Resultados Comparativos")
         st.write("**Estrategia con venta (cuando precio < media móvil 50):**")
-        st.write(f"- Inversión total aportada: ${format_number(inversion_total_est)}")
+        st.write(f"- Inversión total aportada (incluye capital inicial): ${format_number(inversion_total_est + capital_inicial)}")
         st.write(f"- Capital sobrante: ${format_number(capital_sobrante_est)}")
         st.write(f"- Número total de acciones: {acciones_totales_est}")
         st.write(f"- Valor final de la cartera: ${format_number(valor_cartera_est)}")
         st.write(f"- Ganancia/Pérdida: ${format_number(ganancia_perdida_est)} ({format_number(rendimiento_est)}%)")
 
         st.write("**Estrategia sin venta:**")
-        st.write(f"- Inversión total aportada: ${format_number(inversion_total_no_venta)}")
+        st.write(f"- Inversión total aportada (incluye capital inicial): ${format_number(inversion_total_no_venta + capital_inicial)}")
         st.write(f"- Capital sobrante: ${format_number(capital_sobrante_no_venta)}")
         st.write(f"- Número total de acciones: {acciones_totales_no_venta}")
         st.write(f"- Valor final de la cartera: ${format_number(valor_cartera_no_venta)}")
@@ -237,8 +238,8 @@ if st.button("Calcular"):
                                  mode='lines', name='Estrategia con venta', line=dict(color='blue')))
         fig.add_trace(go.Scatter(x=resultados_no_venta['Fecha'], y=resultados_no_venta['Valor_Cartera'], 
                                  mode='lines', name='Estrategia sin venta', line=dict(color='green')))
-        fig.add_trace(go.Scatter(x=resultados_estrategia['Fecha'], y=resultados_estrategia['Inversion_Realizada'], 
-                                 mode='lines', name='Inversión Realizada', line=dict(color='darkgreen', dash='dash')))
+        fig.add_trace(go.Scatter(x=resultados_estrategia['Fecha'], y=resultados_estrategia['Inversion_Realizada'] + capital_inicial, 
+                                 mode='lines', name='Inversión Realizada (con capital inicial)', line=dict(color='darkgreen', dash='dash')))
         fig.update_layout(
             title=f"Comparación de Estrategias en {ticker} ({frecuencia})",
             xaxis_title="Fecha",
@@ -280,4 +281,4 @@ if st.button("Calcular"):
         st.markdown(descargar_csv(resultados_no_venta, "resultados_estrategia_sin_venta.csv"), unsafe_allow_html=True)
 
 # Nota al pie
-st.write("Nota: Los datos provienen de Yahoo Finance. La estrategia con venta aplica impuestos solo a las ganancias (precio de venta > costo promedio). La línea verde oscura muestra la inversión total realizada.")
+st.write("Nota: Los datos provienen de Yahoo Finance. La estrategia con venta aplica impuestos solo a las ganancias (precio de venta > costo promedio). La línea verde oscura muestra la inversión total realizada incluyendo el capital inicial.")
