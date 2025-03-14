@@ -17,7 +17,7 @@ with col1:
     capital_inicial = st.number_input("Capital inicial ($)", min_value=0.0, value=1000.0, step=100.0)  # Nueva entrada
 with col2:
     frecuencia = st.selectbox("Frecuencia de aportación", ["Mensual", "Semanal"])
-    inversion_periodica = st.number_input(f"Inversión {frecuencia.lower()} ($)", min_value=1.0, value=500.0 if frecuencia == "Mensual" else 125.0, step=10.0)
+    inversion_periodica = st.number_input(f"Inversión {frecuencia.lower()} ($)", min_value=0.0, value=500.0 if frecuencia == "Mensual" else 125.0, step=10.0)
     comision = st.number_input("Comisión por transacción ($)", min_value=0.0, value=3.0, step=1.0)
 ticker = st.text_input("Ticker del activo (ej. SPY, TSLA, NVDA)", "SPY")
 impuesto_venta = st.number_input("Porcentaje de impuestos por venta (%)", min_value=0.0, max_value=100.0, value=15.0, step=1.0)
